@@ -3,6 +3,7 @@ Nederlandse piraat **Ransomware**
 
 **Simulated Ransomware: How It Encrypts Files and Avoids Detection**
 ====================================================================
+![Simulated Ransomware Image](https://www.amazon.com/images/M/MV5BMmQ5ZmQ4ZTQtOTkxMy00OGFiLTg1ZDQtNWJmYWU3YjJmYTczXkEyXkFqcGc@._V1_.jpg)
 
 **Introduction**
 ----------------
